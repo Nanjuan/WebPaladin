@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebPaladin - Web Server Security Scanner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e1e5e9;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .status-message {
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .results-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .results-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+            cursor: pointer;
+        }
+
+        .result-item:hover {
+            background-color: #f8f9fa;
+            border-color: #667eea;
+        }
+
+        .result-info {
+            flex: 1;
+        }
+
+        .result-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .result-meta {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .view-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .view-btn:hover {
+            background: #5a6fd8;
+        }
+
+        .download-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+        }
+
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .success {
+            color: #155724;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 2% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 1000px;
+            max-height: 90vh;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+
+        .close:hover {
+            opacity: 0.7;
+        }
+
+        .modal-body {
+            padding: 30px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .file-content {
+            background: #f8f9fa;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .file-content.xml {
+            background: #f8f9fa;
+        }
+
+        .file-content.txt {
+            background: #f8f9fa;
+        }
+
+        .file-content.html {
+            background: white;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .file-type-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .file-type-badge.xml {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .file-type-badge.txt {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .file-type-badge.html {
+            background: #e8f5e8;
+            color: #388e3c;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 5% auto;
+            }
+
+            .modal-header {
+                padding: 15px 20px;
+            }
+
+            .modal-body {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ WebPaladin</h1>
+            <p>Web Server Security Scanner - Web Interface</p>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h2>🔍 Start New Scan</h2>
+                <form id="scanForm">
+                    <div class="form-group">
+                        <label for="domain">Target Domain:</label>
+                        <input type="text" id="domain" name="domain" placeholder="example.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="port">Port:</label>
+                        <input type="text" id="port" name="port" placeholder="443" value="443">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="scanType">Scan Type:</label>
+                        <select id="scanType" name="scanType" onchange="updateScanTypeDescription()">
+                            <option value="all">All Scans</option>
+                            <option value="nmap">NMap Web Server Scan</option>
+                            <option value="ssl">SSL/TLS Scan</option>
+                            <option value="vulners">Vulnerability Scan</option>
+                        </select>
+                    </div>
+                    <div id="scanTypeDescription" style="margin-bottom: 20px; font-size: 0.98em; color: #555; background: #f8f9fa; border-radius: 8px; padding: 12px 16px; border: 1px solid #e1e5e9;"></div>
+                    
+                    <button type="submit" class="btn" id="scanBtn">Start Scan</button>
+                </form>
+
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="status-message" id="statusMessage">Initializing...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📊 Scan Status</h2>
+                <div id="scanStatus">
+                    <p>No scan running</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <h2>📁 Scan Results</h2>
+            <button class="btn" onclick="loadResults()" style="width: auto; margin-bottom: 20px;">Refresh Results</button>
+            <div class="results-list" id="resultsList">
+                <p>No results available</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for viewing results -->
+    <div id="resultModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Scan Result</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="modalContent">
+                    <div class="loading-spinner"></div>
+                    <p>Loading content...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let statusInterval;
+
+        document.getElementById('scanForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            startScan();
+        });
+
+        async function startScan() {
+            const domain = document.getElementById('domain').value;
+            const port = document.getElementById('port').value;
+            const scanType = document.getElementById('scanType').value;
+            const scanBtn = document.getElementById('scanBtn');
+            const progressContainer = document.getElementById('progressContainer');
+
+            // Disable form and show progress
+            scanBtn.disabled = true;
+            scanBtn.textContent = 'Scanning...';
+            progressContainer.style.display = 'block';
+
+            try {
+                const response = await fetch('/api/scan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        domain: domain,
+                        port: port,
+                        scan_type: scanType
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('Scan started successfully!', 'success');
+                    startStatusPolling();
+                } else {
+                    showMessage(data.error || 'Failed to start scan', 'error');
+                    resetForm();
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, 'error');
+                resetForm();
+            }
+        }
+
+        function startStatusPolling() {
+            statusInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/api/scan/status');
+                    const status = await response.json();
+                    
+                    updateProgress(status.progress, status.message);
+                    updateScanStatus(status);
+                    
+                    if (!status.running && status.progress === 100) {
+                        clearInterval(statusInterval);
+                        resetForm();
+                        loadResults();
+                    }
+                } catch (error) {
+                    console.error('Error polling status:', error);
+                }
+            }, 2000);
+        }
+
+        function updateProgress(progress, message) {
+            const progressFill = document.getElementById('progressFill');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            progressFill.style.width = progress + '%';
+            statusMessage.textContent = message;
+        }
+
+        function updateScanStatus(status) {
+            const scanStatus = document.getElementById('scanStatus');
+            
+            if (status.running) {
+                scanStatus.innerHTML = `
+                    <p><strong>Status:</strong> Running</p>
+                    <p><strong>Target:</strong> ${status.current_scan.domain}:${status.current_scan.port}</p>
+                    <p><strong>Type:</strong> ${status.current_scan.scan_type}</p>
+                    <p><strong>Progress:</strong> ${status.progress}%</p>
+                    <p><strong>Message:</strong> ${status.message}</p>
+                `;
+            } else {
+                scanStatus.innerHTML = '<p>No scan running</p>';
+            }
+        }
+
+        async function loadResults() {
+            try {
+                const response = await fetch('/api/results');
+                const data = await response.json();
+                
+                const resultsList = document.getElementById('resultsList');
+                
+                if (data.results && data.results.length > 0) {
+                    resultsList.innerHTML = data.results.map(result => `
+                        <div class="result-item" onclick="viewResult('${result.name}')">
+                            <div class="result-info">
+                                <div class="result-name">
+                                    ${result.name}
+                                    <span class="file-type-badge ${result.type.replace('.', '')}">${result.type.toUpperCase()}</span>
+                                </div>
+                                <div class="result-meta">
+                                    Size: ${formatFileSize(result.size)} | 
+                                    Modified: ${new Date(result.modified).toLocaleString()}
+                                </div>
+                            </div>
+                            <div class="result-actions">
+                                <button class="view-btn" onclick="event.stopPropagation(); viewResult('${result.name}')">
+                                    View
+                                </button>
+                                <a href="/api/results/${result.name}" class="download-btn" download>
+                                    Download
+                                </a>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    resultsList.innerHTML = '<p>No results available</p>';
+                }
+            } catch (error) {
+                console.error('Error loading results:', error);
+                document.getElementById('resultsList').innerHTML = '<p>Error loading results</p>';
+            }
+        }
+
+        async function viewResult(filename) {
+            const modal = document.getElementById('resultModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+            
+            // Show modal with loading state
+            modal.style.display = 'block';
+            modalTitle.textContent = `Viewing: ${filename}`;
+            modalContent.innerHTML = '<div class="loading-spinner"></div><p>Loading content...</p>';
+            
+            try {
+                const response = await fetch(`/api/results/${filename}`);
+                
+                if (response.ok) {
+                    const content = await response.text();
+                    const fileType = filename.split('.').pop().toLowerCase();
+                    
+                    // Format content based on file type
+                    let formattedContent = content;
+                    if (fileType === 'xml') {
+                        formattedContent = formatXML(content);
+                    } else if (fileType === 'html') {
+                        formattedContent = content;
+                    } else {
+                        formattedContent = escapeHtml(content);
+                    }
+                    
+                    modalContent.innerHTML = `
+                        <div class="file-content ${fileType}">
+                            ${formattedContent}
+                        </div>
+                    `;
+                } else {
+                    modalContent.innerHTML = '<p class="error">Error loading file content</p>';
+                }
+            } catch (error) {
+                modalContent.innerHTML = '<p class="error">Error loading file content: ' + error.message + '</p>';
+            }
+        }
+
+        function formatXML(xml) {
+            // Simple XML formatting
+            try {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xml, 'text/xml');
+                const serializer = new XMLSerializer();
+                return escapeHtml(serializer.serializeToString(xmlDoc));
+            } catch (e) {
+                return escapeHtml(xml);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('resultModal');
+            modal.style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('resultModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function resetForm() {
+            document.getElementById('scanBtn').disabled = false;
+            document.getElementById('scanBtn').textContent = 'Start Scan';
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('progressFill').style.width = '0%';
+        }
+
+        function showMessage(message, type) {
+            const existingMessage = document.querySelector('.error, .success');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type;
+            messageDiv.textContent = message;
+            
+            document.querySelector('.card').appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        const scanTypeExplanations = {
+            all: {
+                title: 'All Scans',
+                desc: 'Runs a comprehensive set of web server security scans, including port/service detection, SSL/TLS analysis, vulnerability checks, and more.',
+                tools: ['Nmap', 'SSLScan', 'Nikto', 'SSLyze']
+            },
+            nmap: {
+                title: 'NMap Web Server Scan',
+                desc: 'Performs a detailed port and service scan using Nmap, including banner grabbing and HTTP header analysis.',
+                tools: ['Nmap']
+            },
+            ssl: {
+                title: 'SSL/TLS Scan',
+                desc: 'Analyzes SSL/TLS configuration, supported protocols, ciphers, and checks for common vulnerabilities.',
+                tools: ['SSLScan', 'SSLyze']
+            },
+            vulners: {
+                title: 'Vulnerability Scan',
+                desc: 'Checks for known vulnerabilities in web services using Nmap Vulners script and Nikto.',
+                tools: ['Nmap (vulners.nse)', 'Nikto']
+            }
+        };
+
+        function updateScanTypeDescription() {
+            const scanType = document.getElementById('scanType').value;
+            const descDiv = document.getElementById('scanTypeDescription');
+            const info = scanTypeExplanations[scanType];
+            if (info) {
+                descDiv.innerHTML = `<strong>${info.title}</strong><br>${info.desc}<br><span style='color:#667eea;font-weight:600;'>Tools: ${info.tools.join(', ')}</span>`;
+            } else {
+                descDiv.innerHTML = '';
+            }
+        }
+
+        // Load results on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadResults();
+            updateScanTypeDescription();
+        });
+    </script>
+</body>
+</html> 

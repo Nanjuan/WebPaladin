@@ -4,14 +4,33 @@ FROM python:3.11-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
-ENV FLASK_APP=app.py
+ENV FLASK_APP=web_interface/app.py
 ENV FLASK_ENV=production
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 
-# Install system dependencies
+# Install system dependencies including scanning tools
 RUN apt-get update && apt-get install -y \
     curl \
     wget \
+    nmap \
+    sslscan \
+    default-jdk \
+    dnsutils \
+    git \
+    vim \
+    nano \
+    xsltproc \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Nikto from source if not available in package manager
+RUN if ! command -v nikto >/dev/null 2>&1; then \
+    cd /tmp && \
+    git clone https://github.com/sullo/nikto.git && \
+    cd nikto && \
+    cp program/nikto.pl /usr/local/bin/nikto && \
+    chmod +x /usr/local/bin/nikto && \
+    rm -rf /tmp/nikto; \
+    fi
 
 # Create app directory
 WORKDIR /app
@@ -20,14 +39,30 @@ WORKDIR /app
 COPY requirements.web.txt /tmp/requirements.web.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.web.txt
 
+# Copy main scanner requirements and install Python dependencies
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
 # Copy web interface files
 COPY web_interface/ /app/web_interface/
 COPY templates/ /app/templates/
 COPY static/ /app/static/
 
+# Copy main scanner files (needed for web interface to work)
+COPY web_server_scan.py /app/
+COPY check_dependencies.py /app/
+COPY launcher.py /app/
+COPY requirements.txt /app/
+
+# Copy Nmap files if they exist
+COPY Nmap-reports-files/ /app/Nmap-reports-files/
+
 # Create directories
 RUN mkdir -p /app/scan_results
 RUN mkdir -p /app/logs
+
+# Set execute permissions for the scanner wrapper
+RUN chmod +x /app/web_interface/scanner_wrapper.py
 
 # Create a non-root user
 RUN useradd -m -s /bin/bash webuser && \
