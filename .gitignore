@@ -192,3 +192,7 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Scan results - ignore contents but keep folder structure
+scan_results/*
+!scan_results/.gitkeep
