@@ -1,0 +1,37 @@
+# WebPaladin Docker Compose Configuration
+# Development environment with all scanning tools pre-installed
+
+version: '3.8'
+
+services:
+  webpaladin:
+    build: .
+    container_name: webpaladin-scanner
+    volumes:
+      - ./scan_results:/app/scan_results
+      - ./wordlists:/app/wordlists
+    environment:
+      - PYTHONUNBUFFERED=1
+    stdin_open: true
+    tty: true
+    profiles:
+      - default
+      - development
+
+  webpaladin-web:
+    build: .
+    container_name: webpaladin-web
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./scan_results:/app/scan_results
+      - ./wordlists:/app/wordlists
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: ["python3", "-m", "http.server", "8080"]
+    profiles:
+      - web-interface
+
+networks:
+  default:
+    name: webpaladin-network 

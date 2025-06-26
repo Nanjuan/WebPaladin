@@ -1,0 +1,53 @@
+# Git files
+.git
+.gitignore
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Scan results (will be mounted as volume)
+scan_results/
+
+# Documentation
+README.md
+*.md
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Original batch file
+web_server_scan.bat
+
+# Shell script (not needed in Python container)
+web_server_scan.sh
+
+# Installation script
+install.sh
+
+# Launcher (will be copied separately)
+# launcher.py 

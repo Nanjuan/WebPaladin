@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  webpaladin-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: webpaladin-test
+    image: webpaladin:test
+    volumes:
+      # Mount test data
+      - ./tests:/app/tests
+      - ./test_results:/app/scan_results
+      - ./Nmap-reports-files:/app/Nmap-reports-files:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TESTING=1
+      - DEBUG=1
+    stdin_open: true
+    tty: true
+    # Run as privileged for testing
+    privileged: true
+    # Add network capabilities for scanning
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    # Command to run tests
+    command: ["python3", "-m", "pytest", "/app/tests/", "-v"]
+    # Restart policy for testing
+    restart: "no"
+    # Health check
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Test database for integration tests
+  test-db:
+    image: postgres:13-alpine
+    container_name: test-db
+    environment:
+      POSTGRES_DB: test_scanner
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+    volumes:
+      - test_db_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    restart: "no"
+
+volumes:
+  test_db_data:
+
+networks:
+  default:
+    name: webpaladin-test-network
+    driver: bridge 

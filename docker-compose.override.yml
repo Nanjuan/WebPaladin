@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  webpaladin:
+    # Development overrides
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TERM=xterm-256color
+      - DEBUG=1
+    # Add development tools
+    volumes:
+      - ./scan_results:/app/scan_results
+      - ./Nmap-reports-files:/app/Nmap-reports-files
+      - ./wordlists:/app/wordlists:ro
+      # Mount source code for development
+      - .:/app/src:ro
+    # Development command
+    command: ["python3", "/app/launcher.py"]
+    # Development labels
+    labels:
+      - "com.webpaladin.environment=development"
+      - "com.webpaladin.version=latest" 
