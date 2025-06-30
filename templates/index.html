@@ -340,6 +340,19 @@
 
         .file-content.html {
             background: white;
+            border: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            height: 60vh;
+        }
+
+        .html-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 8px;
+            background: white;
         }
 
         .loading-spinner {
@@ -623,29 +636,38 @@
             modalContent.innerHTML = '<div class="loading-spinner"></div><p>Loading content...</p>';
             
             try {
-                const response = await fetch(`/api/results/${filename}`);
+                const fileType = filename.split('.').pop().toLowerCase();
                 
-                if (response.ok) {
-                    const content = await response.text();
-                    const fileType = filename.split('.').pop().toLowerCase();
-                    
-                    // Format content based on file type
-                    let formattedContent = content;
-                    if (fileType === 'xml') {
-                        formattedContent = formatXML(content);
-                    } else if (fileType === 'html') {
-                        formattedContent = content;
-                    } else {
-                        formattedContent = escapeHtml(content);
-                    }
-                    
+                if (fileType === 'html') {
+                    // For HTML files, use an iframe to prevent style conflicts
                     modalContent.innerHTML = `
                         <div class="file-content ${fileType}">
-                            ${formattedContent}
+                            <iframe class="html-iframe" src="/api/results/${filename}"></iframe>
                         </div>
                     `;
                 } else {
-                    modalContent.innerHTML = '<p class="error">Error loading file content</p>';
+                    // For other file types, fetch and display content
+                    const response = await fetch(`/api/results/${filename}`);
+                    
+                    if (response.ok) {
+                        const content = await response.text();
+                        
+                        // Format content based on file type
+                        let formattedContent = content;
+                        if (fileType === 'xml') {
+                            formattedContent = formatXML(content);
+                        } else {
+                            formattedContent = escapeHtml(content);
+                        }
+                        
+                        modalContent.innerHTML = `
+                            <div class="file-content ${fileType}">
+                                ${formattedContent}
+                            </div>
+                        `;
+                    } else {
+                        modalContent.innerHTML = '<p class="error">Error loading file content</p>';
+                    }
                 }
             } catch (error) {
                 modalContent.innerHTML = '<p class="error">Error loading file content: ' + error.message + '</p>';

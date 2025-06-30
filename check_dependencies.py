@@ -254,18 +254,32 @@ class DependencyChecker:
         
         response = input("Would you like to install missing tools? (y/n): ").lower()
         if response != 'y':
+            self.print_status("Skipping automatic installation. You can install tools manually later.")
             return False
             
         success_count = 0
+        skipped_count = 0
+        
         for tool in missing_tools:
             print()
             response = input(f"Install {tool}? (y/n): ").lower()
             if response == 'y':
                 if self.install_tool(tool):
                     success_count += 1
-                    
-        self.print_status(f"Successfully installed {success_count}/{len(missing_tools)} tools")
-        return success_count == len(missing_tools)
+                else:
+                    self.print_warning(f"Failed to install {tool}")
+            elif response == 'n':
+                self.print_status(f"Skipping {tool}")
+                skipped_count += 1
+            else:
+                self.print_warning("Invalid response. Skipping this tool.")
+                skipped_count += 1
+                
+        self.print_status(f"Installation summary: {success_count} installed, {skipped_count} skipped")
+        
+        # Return True if at least some tools were installed successfully
+        # or if user chose to skip all tools (indicating they know what they're doing)
+        return success_count > 0 or skipped_count == len(missing_tools)
         
     def show_installation_guide(self):
         """Show installation guide for the current OS"""

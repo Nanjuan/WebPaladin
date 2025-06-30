@@ -676,8 +676,14 @@ class WebPaladin:
             input("Press Enter to continue...")
 
     def get_timestamped_filename(self, base_name: str) -> str:
-        """Generate a filename with date prefix"""
-        return f"{self.timestamp}_{base_name}"
+        """Generate a filename with date prefix and numbering for duplicates"""
+        counter = 0
+        
+        while True:
+            filename = f"{self.timestamp}-{base_name}-{counter}"
+            if not os.path.exists(f"{filename}.xml") and not os.path.exists(f"{filename}.txt") and not os.path.exists(f"{filename}.html"):
+                return filename
+            counter += 1
 
 def main():
     """Entry point"""
